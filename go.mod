@@ -1,3 +1,3 @@
-module github.com/Madjim09/currency_converter.git
+module currency_converter
 
 go 1.25.3
