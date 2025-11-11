@@ -6,38 +6,42 @@ import (
 	"strings"
 )
 
-func StartMenu() int {
-	fmt.Println(`
-______________________________________________________________________________
-                              __       ______   _____
-                             /  \     |  __  \ |_   _|
-                            / /\ \    | |__| |   | |
-                           / /__\ \   |  ____/   | |
-                          / ______ \  | |       _| |_
-                         /_/      \_\ |_|      |_____| 
-                       ____    ____    _    _  __      __
-                      / ___|  / __ \  |  \ | | \ \    / /
-                     / /     | |  | | | \ \| |  \ \  / /
-                     \ \___  | |__| | | |\ \ |   \ \/ /
-                      \____|  \____/  |_| \ _|    \__/
-______________________________________________________________________________`)
+func Logo() {
+	fmt.Println(
+		`___________________________________________________________________________________
+                               __       ______   _____
+                              /  \     |  __  \ |_   _|
+                             / /\ \    | |__| |   | |
+                            / /__\ \   |  ____/   | |
+                           / ______ \  | |       _| |_
+                          /_/      \_\ |_|      |_____|
+   ____    ____    _    _  __      __  ______   _____   _______   ______   _____
+  / ___|  / __ \  |  \ | | \ \    / / | _____| |  _  | |__   __| | _____| |  _  | 
+ / /     | |  | | | \ \| |  \ \  / /  | |___   |  ___/    | |    | |___   |  ___/
+ \ \___  | |__| | | |\ \ |   \ \/ /   | |____  |  _ \     | |    | |____  |  _ \  
+  \____|  \____/  |_| \ _|    \__/    |______| |_| \_\    |_|    |______| |_| \_\
+___________________________________________________________________________________`)
 
+	fmt.Println()
+}
+
+func Menu() int {
 	var menuText = `Меню:
 - 1. Конвертация
-- 2. Меню
 - 0. Выход
 
 Введите цифру: `
 
 	fmt.Print(menuText)
 
+	// Ввод данных и обработка ошибок
 	var inputNumber int
 	_, err := fmt.Scan(&inputNumber)
 
-	for err != nil || inputNumber > 2 || inputNumber < 1 {
+	for err != nil || inputNumber > 1 || inputNumber < 0 {
 		if err != nil {
 			fmt.Println("Введено неверное значение, попробуйте ещё раз.")
-		} else if inputNumber > 2 || inputNumber < 0 {
+		} else if inputNumber > 1 || inputNumber < 0 {
 			fmt.Println("Вы ввели число, не входящее в диапазон от 0 до 2.")
 		}
 		fmt.Print(menuText)
@@ -51,52 +55,15 @@ func Converter() error {
 	// Загрузка данных
 	rates, err := utils.LoadRates()
 
-	for i := 0; i <= 10; i++ {
-		if err != nil {
-			rates, err = utils.LoadRates()
-		} else {
-			break
-		}
+	if err != nil {
+		fmt.Println("Локальный файл с курсами не найден. Загружаю с API...")
+		rates = Request()
+		utils.SaveFile(rates)
 	}
 
-	// Ввод данных и проверка на ошибки
-	var val1, val2 string
-	fmt.Print("Введите код валюты из которой перевести (Пример: RUB): ")
-	_, err = fmt.Scan(&val1)
-
-	for {
-		if err != nil {
-			fmt.Println("Неверный ввод.")
-			fmt.Print("Введите код валюты из которой перевести (Пример: RUB): ")
-			_, err = fmt.Scan(&val1)
-		} else if _, ok := rates.Rates[strings.ToUpper(val1)]; !ok {
-			fmt.Println("Нет такого кода в системе.")
-			fmt.Print("Введите код валюты из которой перевести (Пример: RUB): ")
-			_, err = fmt.Scan(&val1)
-		} else {
-			break
-		}
-	}
-
-	fmt.Print("Введите код валюты в которую перевести: ")
-	fmt.Scan(&val2)
-
-	for {
-		if err != nil {
-			fmt.Println("Неверный ввод.")
-			fmt.Print("Введите код валюты в которую перевести (Пример: RUB): ")
-			_, err = fmt.Scan(&val2)
-		} else if _, ok := rates.Rates[strings.ToUpper(val1)]; !ok {
-			fmt.Println("Нет такого кода в системе.")
-			fmt.Print("Введите код валюты в которую перевести (Пример: RUB): ")
-			_, err = fmt.Scan(&val2)
-		} else {
-			break
-		}
-	}
-
-	val1 = strings.ToUpper(val1)
-	val2 = strings.ToUpper(val2)
+	// Ввод данных и обработка ошибок
+	val1 := getValidCurrency("Введите код валюты из которой перевести (Пример: RUB): ", rates.Rates)
+	val2 := getValidCurrency("Введите код валюты в которую перевести (Пример: RUB): ", rates.Rates)
 
 	var valCount float64
 	fmt.Printf("Введите количество %s: ", val1)
@@ -112,18 +79,31 @@ func Converter() error {
 		}
 	}
 
-	var rezult float64
-
 	// Рассчет результата
-	if val1 == "USD" {
-		rezult = rates.Rates[val2] * valCount
-	} else if val2 == "USD" {
-		rezult = (rates.Rates[val2] / rates.Rates[val1]) * valCount
-	} else {
-		rezult = (rates.Rates["USD"] / rates.Rates[val1]) * rates.Rates[val2] * valCount
+	if val1 == val2 {
+		fmt.Printf("%.2f %s = %.2f %s (одинаковые валюты)\n", valCount, val1, valCount, val2)
+		return nil
 	}
 
-	fmt.Printf("%.2f %s = %.2f %s\n\n", valCount, val1, rezult, val2)
+	result := (valCount / rates.Rates[val1]) * rates.Rates[val2]
+	fmt.Printf("%.2f %s = %.2f %s\n", valCount, val1, result, val2)
 
 	return nil
+}
+
+func getValidCurrency(prompt string, validCurrencies map[string]float64) string {
+	var code string
+	for {
+		fmt.Print(prompt)
+		_, err := fmt.Scan(&code)
+		if err != nil {
+			fmt.Println("Неверный ввод. Попробуйте снова.")
+			continue
+		}
+		code = strings.ToUpper(code)
+		if _, ok := validCurrencies[code]; ok {
+			return code
+		}
+		fmt.Println("Нет такого кода валюты.")
+	}
 }
