@@ -1,4 +1,4 @@
-package converter
+package models
 
 type Rates struct {
 	Date  string             `json:"time_last_update_utc"`
