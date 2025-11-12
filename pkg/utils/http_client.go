@@ -11,13 +11,13 @@ func SaveFile(r models.Rates) error {
 	if err != nil {
 		return err
 	}
-	err = os.WriteFile("D:/Programming/Go/currency_converter/internal/converter/data/rates.json", data, 0644)
+	err = os.WriteFile("internal/converter/data/rates.json", data, 0644)
 	return err
 }
 
 func LoadRates() (models.Rates, error) {
 	var r models.Rates
-	data, err := os.ReadFile("D:/Programming/Go/currency_converter/internal/converter/data/rates.json")
+	data, err := os.ReadFile("internal/converter/data/rates.json")
 	if err != nil {
 		return r, err
 	}

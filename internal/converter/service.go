@@ -57,7 +57,13 @@ func Converter() error {
 
 	if err != nil {
 		fmt.Println("Локальный файл с курсами не найден. Загружаю с API...")
-		rates = Request()
+		rates, err = Request()
+		if err != nil {
+			return fmt.Errorf("не удалось загрузить курсы с API: %v", err)
+		}
+		if saveErr := utils.SaveFile(rates); saveErr != nil {
+			fmt.Printf("Предупреждение: не удалось сохранить файл: %v\n", saveErr)
+		}
 		utils.SaveFile(rates)
 	}
 
