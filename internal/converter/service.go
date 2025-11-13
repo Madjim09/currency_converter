@@ -52,6 +52,12 @@ func Menu() int {
 }
 
 func Converter() error {
+	fmt.Println(`Популярные коды валют:
+|---------------------|
+| USD EUR RUB JPY GBP |
+| JPY CNY CHF AUD CAD |
+|---------------------|`)
+
 	// Загрузка данных
 	rates, err := utils.LoadRates()
 

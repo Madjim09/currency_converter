@@ -1,7 +1,7 @@
 package converter
 
 import (
-	"currency_converter/internal/converter/models"
+	"currency_converter/internal/models"
 	"encoding/json"
 	"fmt"
 	"io"
